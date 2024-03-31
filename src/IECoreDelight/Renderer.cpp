@@ -35,6 +35,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 #include "GafferScene/Private/IECoreScenePreview/Renderer.h"
+#include "GafferScene/Private/IECoreScenePreview/Procedural.h"
 
 #include "Gaffer/Private/IECorePreview/LRUCache.h"
 
@@ -265,8 +266,6 @@ class DelightOutput : public IECore::RefCounted
 			driverParams.add( { "drivername", &typePtr, NSITypeString, 0, 1, 0 } );
 			driverParams.add( { "imagefilename", &namePtr, NSITypeString, 0, 1, 0 } );
 
-			m_driverHandle = DelightHandle( context, "outputDriver:" + name, ownership, "outputdriver", driverParams );
-
 			// Layer
 
 			string variableName;
@@ -327,7 +326,7 @@ class DelightOutput : public IECore::RefCounted
 				layerName = IECore::CamelCase::join( layerTokens.begin(), layerTokens.end(), IECore::CamelCase::AllExceptFirst);
 			}
 
-			ParameterList layerParams;
+			ParameterList layerParams( output->parameters() );
 
 			layerParams.add( "variablename", variableName );
 			layerParams.add( "variablesource", variableSource );
@@ -335,10 +334,37 @@ class DelightOutput : public IECore::RefCounted
 			layerParams.add( "layername", layerName );
 			layerParams.add( { "withalpha", &withAlpha, NSITypeInteger, 0, 1, 0 } );
 
-			const string scalarFormat = this->scalarFormat( output );
-			const string colorProfile = scalarFormat == "float" ? "linear" : "sRGB";
-			layerParams.add( "scalarformat", scalarFormat );
-			layerParams.add( "colorprofile", colorProfile );
+			const double filterSize = parameter<float>( output->parameters(), "filtersize", 3.0 );
+			if( filterSize != 3.0 )
+			{
+				layerParams.add( { "filterwidth", &filterSize, NSITypeDouble, 0, 1, 0 } );
+			}
+
+			const string scalarFormatQuant = this->scalarFormat( output );
+			const string colorProfileQuant = scalarFormatQuant == "float" ? "linear" : "sRGB";
+			const string scalarFormat = parameter<string>( output->parameters(), "scalarformat", "" );
+			if( scalarFormat == "" )
+			{
+				layerParams.add( "scalarformat", scalarFormatQuant );
+				layerParams.add( "colorprofile", colorProfileQuant );
+			}
+
+			const string lightGroup = parameter<string>( output->parameters(), "lightgroup", "" );
+			vector<string> lightGroupTokens;
+			if( lightGroup != "" )
+			{
+				IECore::StringAlgo::tokenize( lightGroup, ' ', lightGroupTokens );
+			}
+
+			const string customDriverName = parameter<string>( output->parameters(), "customdrivername", "" );
+			if( customDriverName == "" )
+			{
+				m_driverHandle = DelightHandle( context, "outputDriver:" + name, ownership, "outputdriver", driverParams );
+			}
+			else
+			{
+				m_driverHandle = DelightHandle( context, "outputDriver:" + customDriverName, ownership, "outputdriver", driverParams );
+			}
 
 			m_layerHandle = DelightHandle( context, "outputLayer:" + name, ownership, "outputlayer", layerParams );
 
@@ -348,6 +374,19 @@ class DelightOutput : public IECore::RefCounted
 				m_layerHandle.name(), "outputdrivers",
 				0, nullptr
 			);
+
+			if( lightGroup != "" )
+			{
+				for( string lightGroupToken : lightGroupTokens )
+				{
+					NSIConnect(
+						m_context,
+						lightGroupToken.c_str(), "",
+						m_layerHandle.name(), "lightset",
+						0, nullptr
+					);
+				}
+			}
 		}
 
 		const DelightHandle &layerHandle() const
@@ -368,7 +407,7 @@ class DelightOutput : public IECore::RefCounted
 			{
 				return "uint8";
 			}
-			else if( quantize == vector<int>( { 0, 65536, 0, 65536 } ) )
+			else if( quantize == vector<int>( { 0, 65535, 0, 65535 } ) )
 			{
 				return "uint16";
 			}
@@ -683,17 +722,15 @@ class DelightAttributes : public IECoreScenePreview::Renderer::AttributesInterfa
 
 			NSISetAttribute( m_handle.context(), m_handle.name(), params.size(), params.data() );
 
-			if( !m_surfaceShader )
+			if( m_surfaceShader )
 			{
-				m_surfaceShader = shaderCache->defaultSurface();
+				NSIConnect(
+					context,
+					m_surfaceShader->handle().name(), "",
+					m_handle.name(), "surfaceshader",
+					0, nullptr
+				);
 			}
-
-			NSIConnect(
-				context,
-				m_surfaceShader->handle().name(), "",
-				m_handle.name(), "surfaceshader",
-				0, nullptr
-			);
 
 			if( m_volumeShader )
 			{
@@ -826,6 +863,9 @@ IE_CORE_DECLAREPTR( AttributesCache )
 namespace
 {
 
+// Forward declaration
+bool convertProcedural( IECoreScenePreview::ConstProceduralPtr procedural, const IECoreScenePreview::Renderer::AttributesInterface *attributes, NSIContext_t context, DelightHandle::Ownership ownership, const char *handle );
+
 class InstanceCache : public IECore::RefCounted
 {
 
@@ -837,7 +877,7 @@ class InstanceCache : public IECore::RefCounted
 		}
 
 		// Can be called concurrently with other get() calls.
-		DelightHandleSharedPtr get( const IECore::Object *object )
+		DelightHandleSharedPtr get( const IECore::Object *object, const IECoreScenePreview::Renderer::AttributesInterface *attributes )
 		{
 			const IECore::MurmurHash hash = object->Object::hash();
 
@@ -846,7 +886,19 @@ class InstanceCache : public IECore::RefCounted
 			if( !a->second )
 			{
 				const std::string &name = "instance:" + hash.toString();
-				if( NodeAlgo::convert( object, m_context, name.c_str() ) )
+
+				if( const IECoreScenePreview::Procedural *procedural = IECore::runTimeCast<const IECoreScenePreview::Procedural>( object ) )
+				{
+					if( convertProcedural( procedural, attributes, m_context, m_ownership, name.c_str() ) )
+					{
+						a->second = make_shared<DelightHandle>( m_context, name, m_ownership );
+					}
+					else
+					{
+						a->second = nullptr;
+					}
+				}
+				else if( NodeAlgo::convert( object, m_context, name.c_str() ) )
 				{
 					a->second = make_shared<DelightHandle>( m_context, name, m_ownership );
 				}
@@ -860,7 +912,7 @@ class InstanceCache : public IECore::RefCounted
 		}
 
 		// Can be called concurrently with other get() calls.
-		DelightHandleSharedPtr get( const std::vector<const IECore::Object *> &samples, const std::vector<float> &times )
+		DelightHandleSharedPtr get( const std::vector<const IECore::Object *> &samples, const std::vector<float> &times, const IECoreScenePreview::Renderer::AttributesInterface *attributes )
 		{
 			IECore::MurmurHash hash;
 			for( std::vector<const IECore::Object *>::const_iterator it = samples.begin(), eIt = samples.end(); it != eIt; ++it )
@@ -878,7 +930,19 @@ class InstanceCache : public IECore::RefCounted
 			if( !a->second )
 			{
 				const std::string &name = "instance:" + hash.toString();
-				if( NodeAlgo::convert( samples, times, m_context, name.c_str() ) )
+
+				if( const IECoreScenePreview::Procedural *procedural = IECore::runTimeCast<const IECoreScenePreview::Procedural>( samples.front() ) )
+				{
+					if( convertProcedural( procedural, attributes, m_context, m_ownership, name.c_str() ) )
+					{
+						a->second = make_shared<DelightHandle>( m_context, name, m_ownership );
+					}
+					else
+					{
+						a->second = nullptr;
+					}
+				}
+				else if( NodeAlgo::convert( samples, times, m_context, name.c_str() ) )
 				{
 					a->second = make_shared<DelightHandle>( m_context, name, m_ownership );
 				}
@@ -1153,6 +1217,219 @@ IE_CORE_DECLAREPTR( DelightLight );
 } // namespace
 
 //////////////////////////////////////////////////////////////////////////
+// DelightProceduralRenderer
+//////////////////////////////////////////////////////////////////////////
+
+namespace
+{
+
+IE_CORE_FORWARDDECLARE( DelightProceduralRenderer )
+
+class DelightProceduralRenderer final : public IECoreScenePreview::Renderer
+{
+
+	public :
+
+		DelightProceduralRenderer( const IECoreScenePreview::Renderer::AttributesInterface *attributesToInherit, NSIContext_t context, DelightHandle::Ownership ownership, const char *handle )
+			:	m_context( context ), m_ownership( ownership ), m_frame( 1 )
+		{
+			vector<NSIParam_t> params;
+
+			m_ownership = DelightHandle::Unowned;
+
+			const char *apistream = "apistream";
+			const char *streamformat = "binarynsi";
+			const char *streamcompression = "gzip";
+			std::string filename = handle;
+			filename = "/tmp/" + filename + ".nsi.gz";
+			const char *fileNamePtr = filename.c_str();
+
+			params = {
+				{ "type", &apistream, NSITypeString, 0, 1, 0 },
+				{ "streamformat", &streamformat, NSITypeString, 0, 1, 0 },
+				{ "streamfilename", &fileNamePtr, NSITypeString , 0, 1, 0 },
+				{ "streamcompression", &streamcompression, NSITypeString , 0, 1, 0 }
+			};
+
+			m_context = NSIBegin( params.size(), params.data() );
+			//m_attributesToInherit = static_cast<const IECore::ConstCompoundObjectPtr *>( attributes );
+			m_instanceCache = new InstanceCache( m_context, m_ownership );
+			m_attributesCache = new AttributesCache( m_context, m_ownership );
+		}
+
+		~DelightProceduralRenderer() override
+		{
+			m_attributesCache.reset();
+			m_instanceCache.reset();
+			NSIEnd( m_context );
+		}
+
+		IECore::InternedString name() const override
+		{
+			return "3Delight";
+		}
+
+		void option( const IECore::InternedString &name, const IECore::Object *value ) override
+		{
+			IECore::msg( IECore::Msg::Warning, "DelightRenderer", "Procedurals can not call option()" );
+		}
+
+		void output( const IECore::InternedString &name, const IECoreScene::Output *output ) override
+		{
+			IECore::msg( IECore::Msg::Warning, "DelightRenderer", "Procedurals can not call output()" );
+		}
+
+		Renderer::AttributesInterfacePtr attributes( const IECore::CompoundObject *attributes ) override
+		{
+			// Emulate attribute inheritance.
+			IECore::CompoundObject* fullAttributes = new IECore::CompoundObject;
+			//for( const auto &a : m_attributesToInherit->members() )
+			//{
+			//	fullAttributes->members()[a.first] = a.second;
+			//}
+			for( const auto &a : attributes->members() )
+			{
+				fullAttributes->members()[a.first] = a.second;
+			}
+			return m_attributesCache->get( fullAttributes );
+		}
+
+		ObjectInterfacePtr camera( const std::string &name, const IECoreScene::Camera *camera, const AttributesInterface *attributes ) override
+		{
+			IECore::msg( IECore::Msg::Warning, "DelightRenderer", "Procedurals can not call camera()" );
+			return nullptr;
+		}
+
+		ObjectInterfacePtr light( const std::string &name, const IECore::Object *object, const AttributesInterface *attributes ) override
+		{
+
+			DelightHandleSharedPtr instance;
+			if( object )
+			{
+				instance = m_instanceCache->get( object, attributes );
+			}
+
+			ObjectInterfacePtr result = new DelightLight( m_context, name, instance, m_ownership );
+			result->attributes( attributes );
+
+			return result;
+		}
+
+		ObjectInterfacePtr lightFilter( const std::string &name, const IECore::Object *object, const AttributesInterface *attributes ) override
+		{
+			return nullptr;
+		}
+
+		Renderer::ObjectInterfacePtr object( const std::string &name, const IECore::Object *object, const AttributesInterface *attributes ) override
+		{
+			if( !object )
+			{
+				return nullptr;
+			}
+
+			DelightHandleSharedPtr instance = m_instanceCache->get( object, attributes );
+			if( !instance )
+			{
+				return nullptr;
+			}
+
+			ObjectInterfacePtr result = new DelightObject( m_context, name, instance, m_ownership );
+			result->attributes( attributes );
+			return result;
+		}
+
+		ObjectInterfacePtr object( const std::string &name, const std::vector<const IECore::Object *> &samples, const std::vector<float> &times, const AttributesInterface *attributes ) override
+		{
+
+			DelightHandleSharedPtr instance = m_instanceCache->get( samples, times, attributes );
+			if( !instance )
+			{
+				return nullptr;
+			}
+
+			ObjectInterfacePtr result = new DelightObject( m_context, name, instance, m_ownership );
+			result->attributes( attributes );
+			return result;
+		}
+
+		void render() override
+		{
+			//IECore::msg( IECore::Msg::Warning, "DelightRenderer", "Procedurals can not call render()" );
+
+			m_instanceCache->clearUnused();
+			m_attributesCache->clearUnused();
+
+			const char *start = "start";
+			vector<NSIParam_t> params = {
+				{ "action", &start, NSITypeString, 0, 1, 0 },
+				{ "frame", &m_frame, NSITypeInteger, 0, 1, 0 }
+			};
+
+			NSIRenderControl(
+				m_context,
+				params.size(), params.data()
+			);
+		}
+
+		void pause() override
+		{
+			// In theory we could use NSIRenderControl "suspend"
+			// here, but despite documenting it, 3delight does not
+			// support it. Instead we let 3delight waste cpu time
+			// while we make our edits.
+		}
+
+	private :
+
+		//IECore::ConstCompoundObjectPtr m_attributesToInherit;
+		NSIContext_t m_context;
+		DelightHandle::Ownership m_ownership;
+
+		int m_frame;
+
+		InstanceCachePtr m_instanceCache;
+		AttributesCachePtr m_attributesCache;
+
+		// Registration with factory
+
+		static Renderer::TypeDescription<DelightProceduralRenderer> g_typeDescription;
+
+};
+
+IE_CORE_DECLAREPTR( DelightProceduralRenderer )
+
+bool convertProcedural( IECoreScenePreview::ConstProceduralPtr procedural, const IECoreScenePreview::Renderer::AttributesInterface *attributes, NSIContext_t context, DelightHandle::Ownership ownership, const char *handle )
+{
+	NSICreate( context, handle, "procedural", 0, nullptr );
+
+	ParameterList procParameters;
+
+	std::string type = "apistream";
+	std::string filename = handle;
+	filename = "/tmp/" + filename + ".nsi.gz";
+
+	procParameters.add( "type", type );
+	procParameters.add( "filename", filename );
+
+	NSISetAttribute( context, handle, procParameters.size(), procParameters.data() );
+
+	DelightProceduralRendererPtr renderer = new DelightProceduralRenderer( attributes, context, ownership, handle );
+
+	tbb::this_task_arena::isolate(
+		// Isolate in case procedural spawns TBB tasks, because
+		// `convertProcedural()` is called behind a lock in
+		// `InstanceCache.get()`.
+		[&]() {
+			procedural->render( renderer.get() );
+		}
+	);
+
+	return true;
+}
+
+} // namespace
+
+//////////////////////////////////////////////////////////////////////////
 // DelightRenderer
 //////////////////////////////////////////////////////////////////////////
 
@@ -1163,6 +1440,7 @@ IECore::InternedString g_frameOptionName( "frame" );
 IECore::InternedString g_cameraOptionName( "camera" );
 IECore::InternedString g_sampleMotionOptionName( "sampleMotion" );
 IECore::InternedString g_oversamplingOptionName( "dl:oversampling" );
+IECore::InternedString g_evaluatefileOptionName( "dl:evaluatefile" );
 
 IECore::InternedString g_maxLengthDiffuseOptionName( "dl:maximumraylength.diffuse" );
 IECore::InternedString g_maxLengthHairOptionName( "dl:maximumraylength.hair" );
@@ -1226,7 +1504,7 @@ class DelightRenderer final : public IECoreScenePreview::Renderer
 	public :
 
 		DelightRenderer( RenderType renderType, const std::string &fileName, const IECore::MessageHandlerPtr &messageHandler )
-			:	m_renderType( renderType ), m_frame( 1 ), m_messageHandler( messageHandler )
+			:	m_renderType( renderType ), m_frame( 1 ), m_evaluatefile( "" ), m_messageHandler( messageHandler )
 		{
 			const IECore::MessageHandler::Scope s( m_messageHandler.get() );
 
@@ -1312,6 +1590,28 @@ class DelightRenderer final : public IECoreScenePreview::Renderer
 				else
 				{
 					m_camera = "";
+				}
+			}
+			else if( name == g_evaluatefileOptionName )
+			{
+				if( value )
+				{
+					if( const StringData *d = reportedCast<const StringData>( value, "option", name ) )
+					{
+						if( m_evaluatefile != d->readable() )
+						{
+							stop();
+							m_evaluatefile = d->readable();
+						}
+					}
+					else
+					{
+						m_evaluatefile = "";
+					}
+				}
+				else
+				{
+					m_evaluatefile = "";
 				}
 			}
 			else if( name == g_oversamplingOptionName )
@@ -1431,7 +1731,7 @@ class DelightRenderer final : public IECoreScenePreview::Renderer
 			DelightHandleSharedPtr instance;
 			if( object )
 			{
-				instance = m_instanceCache->get( object );
+				instance = m_instanceCache->get( object, attributes );
 			}
 
 			ObjectInterfacePtr result = new DelightLight( m_context, name, instance, ownership() );
@@ -1454,7 +1754,7 @@ class DelightRenderer final : public IECoreScenePreview::Renderer
 
 			const IECore::MessageHandler::Scope s( m_messageHandler.get() );
 
-			DelightHandleSharedPtr instance = m_instanceCache->get( object );
+			DelightHandleSharedPtr instance = m_instanceCache->get( object, attributes );
 			if( !instance )
 			{
 				return nullptr;
@@ -1469,7 +1769,7 @@ class DelightRenderer final : public IECoreScenePreview::Renderer
 		{
 			const IECore::MessageHandler::Scope s( m_messageHandler.get() );
 
-			DelightHandleSharedPtr instance = m_instanceCache->get( samples, times );
+			DelightHandleSharedPtr instance = m_instanceCache->get( samples, times, attributes );
 			if( !instance )
 			{
 				return nullptr;
@@ -1501,6 +1801,28 @@ class DelightRenderer final : public IECoreScenePreview::Renderer
 			}
 
 			updateCamera();
+
+			if( m_evaluatefile != "" )
+			{
+				string evaluatetype = "";
+				if( boost::ends_with( m_evaluatefile, "lua" ) )
+				{
+					evaluatetype = "lua";
+				}
+				else
+				{
+					evaluatetype = "apistream";
+				}
+
+				ParameterList evaluateparams;
+				evaluateparams.add( "type", evaluatetype);
+				evaluateparams.add( "filename", m_evaluatefile);
+
+				NSIEvaluate(
+					m_context,
+					evaluateparams.size(), evaluateparams.data()
+				);
+			}
 
 			const int one = 1;
 			const char *start = "start";
@@ -1734,6 +2056,8 @@ class DelightRenderer final : public IECoreScenePreview::Renderer
 
 		int m_frame;
 		string m_camera;
+
+		string m_evaluatefile;
 
 		bool m_rendering = false;
 
