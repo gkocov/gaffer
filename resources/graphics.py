@@ -334,6 +334,7 @@
 			"ids" : [
 				"colorPlugValueWidgetSlidersOff",
 				"colorPlugValueWidgetSlidersOn",
+				"ctrlEnter",
 			]
 
 		},
@@ -555,6 +556,8 @@
 		'focusOn',
 		'focusOff',
 		'focusOnHover',
-		'focusOffHover'
+		'focusOffHover',
+		'shaderTweakProxy',
+		'shaderTweakProxyIcon'
 	]
 }

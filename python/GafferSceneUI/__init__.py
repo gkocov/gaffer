@@ -47,6 +47,7 @@ from .PrimitiveInspector import PrimitiveInspector
 from .UVInspector import UVInspector
 from .FilterPlugValueWidget import FilterPlugValueWidget
 from .ScenePathPlugValueWidget import ScenePathPlugValueWidget
+from .SetExpressionPlugValueWidget import SetExpressionPlugValueWidget
 from .LightEditor import LightEditor
 from .SetEditor import SetEditor
 from .RenderPassEditor import RenderPassEditor
@@ -128,6 +129,7 @@ from . import FilterProcessorUI
 from . import MeshToPointsUI
 from . import ShaderBallUI
 from . import ShaderTweaksUI
+from . import ShaderTweakProxyUI
 from . import CameraTweaksUI
 from . import LightToCameraUI
 from . import FilterResultsUI
