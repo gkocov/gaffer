@@ -1256,6 +1256,7 @@ IECore::InternedString g_frameOptionName( "frame" );
 IECore::InternedString g_cameraOptionName( "camera" );
 IECore::InternedString g_sampleMotionOptionName( "sampleMotion" );
 IECore::InternedString g_oversamplingOptionName( "dl:oversampling" );
+IECore::InternedString g_evaluatefileOptionName( "dl:evaluatefile" );
 
 IECore::InternedString g_maxLengthDiffuseOptionName( "dl:maximumraylength.diffuse" );
 IECore::InternedString g_maxLengthHairOptionName( "dl:maximumraylength.hair" );
@@ -1320,7 +1321,7 @@ class DelightRenderer final : public IECoreScenePreview::Renderer
 	public :
 
 		DelightRenderer( RenderType renderType, const std::string &fileName, const IECore::MessageHandlerPtr &messageHandler, bool cloud = false )
-			:	m_renderType( renderType ), m_messageHandler( messageHandler )
+			:	m_renderType( renderType ), m_evaluatefile( "" ), m_messageHandler( messageHandler )
 		{
 			const IECore::MessageHandler::Scope s( m_messageHandler.get() );
 
@@ -1422,6 +1423,28 @@ class DelightRenderer final : public IECoreScenePreview::Renderer
 				else
 				{
 					m_camera = "";
+				}
+			}
+			else if( name == g_evaluatefileOptionName )
+			{
+				if( value )
+				{
+					if( const StringData *d = reportedCast<const StringData>( value, "option", name ) )
+					{
+						if( m_evaluatefile != d->readable() )
+						{
+							stop();
+							m_evaluatefile = d->readable();
+						}
+					}
+					else
+					{
+						m_evaluatefile = "";
+					}
+				}
+				else
+				{
+					m_evaluatefile = "";
 				}
 			}
 			else if( name == g_oversamplingOptionName )
@@ -1615,6 +1638,28 @@ class DelightRenderer final : public IECoreScenePreview::Renderer
 			}
 
 			updateCamera();
+
+			if( m_evaluatefile != "" )
+			{
+				string evaluatetype = "";
+				if( boost::ends_with( m_evaluatefile, "lua" ) )
+				{
+					evaluatetype = "lua";
+				}
+				else
+				{
+					evaluatetype = "apistream";
+				}
+
+				ParameterList evaluateparams;
+				evaluateparams.add( "type", evaluatetype);
+				evaluateparams.add( "filename", m_evaluatefile);
+
+				NSIEvaluate(
+					m_context,
+					evaluateparams.size(), evaluateparams.data()
+				);
+			}
 
 			const int one = 1;
 			const char *start = "start";
@@ -1856,6 +1901,8 @@ class DelightRenderer final : public IECoreScenePreview::Renderer
 		RenderType m_renderType;
 
 		string m_camera;
+
+		string m_evaluatefile;
 
 		bool m_rendering = false;
 
