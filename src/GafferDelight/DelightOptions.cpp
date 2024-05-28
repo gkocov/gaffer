@@ -51,6 +51,7 @@ DelightOptions::DelightOptions( const std::string &name )
 	options->addChild( new Gaffer::NameValuePlug( "dl:bucketorder", new IECore::StringData( "horizontal" ), false, "bucketOrder" ) );
 	options->addChild( new Gaffer::NameValuePlug( "dl:numberofthreads", new IECore::IntData( 0 ), false, "numberOfThreads" ) );
 	options->addChild( new Gaffer::NameValuePlug( "dl:renderatlowpriority", new IECore::BoolData( false ), false, "renderAtLowPriority" ) );
+	options->addChild( new Gaffer::NameValuePlug( "dl:evaluatefile", new IECore::StringData( "" ), false, "evaluateFile" ) );
 
 	// Quality
 

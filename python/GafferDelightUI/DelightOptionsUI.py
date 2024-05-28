@@ -54,6 +54,9 @@ def __renderingSummary( plug ) :
 	if plug["renderAtLowPriority"]["enabled"].getValue() :
 		info.append( "Low Priority {}".format( "On" if plug["renderAtLowPriority"]["value"].getValue() else "Off" ) )
 
+	if plug["evaluateFile"]["enabled"].getValue() :
+		info.append( "Evaluate File: {}".format( plug["evaluateFile"]["value"].getValue() ) )
+
 	return ", ".join( info )
 
 def __qualitySummary( plug ) :
@@ -237,6 +240,25 @@ Gaffer.Metadata.registerNode(
 			""",
 
 			"layout:section", "Rendering",
+
+		],
+
+		"options.evaluateFile" : [
+
+			"description",
+			"""
+			The path to a NSI scene file or NSI Lua script to be evaluated 
+			in addition to the Gaffer exported scene before rendering. 
+			""",
+
+			"layout:section", "Rendering",
+
+		],
+
+		"options.evaluateFile.value" : [
+
+			"plugValueWidget:type", "GafferUI.FileSystemPathPlugValueWidget",
+			"path:leaf", True,
 
 		],
 
