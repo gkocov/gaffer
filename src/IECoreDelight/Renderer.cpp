@@ -722,6 +722,7 @@ const InternedString g_USDLightAttributeName = "light";
 const InternedString g_USDSurfaceAttributeName = "surface";
 
 IECore::InternedString g_setsAttributeName( "sets" );
+IECore::InternedString g_linkedLightsAttributeName( "linkedLights" );
 
 class DelightAttributes : public IECoreScenePreview::Renderer::AttributesInterface
 {
@@ -780,6 +781,13 @@ class DelightAttributes : public IECoreScenePreview::Renderer::AttributesInterfa
 								m_sets.push_back(setName);
 							}
 						}
+					}
+				}
+				else if( m.first == g_linkedLightsAttributeName )
+				{
+					if( const StringData *d = reportedCast<const StringData>( m.second.get(), "attribute", m.first ) )
+					{
+							m_linkedLights = d->readable() ;
 					}
 				}
 				else if( boost::starts_with( m.first.string(), "dl:" ) )
@@ -858,6 +866,11 @@ class DelightAttributes : public IECoreScenePreview::Renderer::AttributesInterfa
 			return m_sets;
 		}
 
+		const std::string &linkedLights() const
+		{
+			return m_linkedLights;
+		}
+
 	private :
 
 		static ConstDelightShaderPtr shader( const IECore::InternedString &name, const IECore::CompoundObject *attributes, ShaderCache *shaderCache )
@@ -879,6 +892,7 @@ class DelightAttributes : public IECoreScenePreview::Renderer::AttributesInterfa
 
 		ConstShaderNetworkPtr m_usdLightShader;
 		vector<string> m_sets;
+		std::string m_linkedLights;
 
 };
 
@@ -1223,6 +1237,29 @@ class DelightObject: public IECoreScenePreview::Renderer::ObjectInterface
 					0, nullptr
 				);
 			}
+			
+			if ( m_attributes->linkedLights() != "" )
+			{
+				std::string lightSetName = m_attributes->linkedLights();
+				std::string lightSetNameAttributes = lightSetName + "_attributes";
+				NSICreate( m_transformHandle.context(), lightSetName.c_str(), "set", 0, nullptr );
+				NSICreate( m_transformHandle.context(), lightSetNameAttributes.c_str(), "attributes", 0, nullptr );
+				NSIConnect(
+					m_transformHandle.context(),
+					lightSetNameAttributes.c_str(), "",
+					lightSetName.c_str(), "geometryattributes",
+					0, nullptr
+				);
+				const int zero = 0;
+				NSIParam_t visibility = { "value", &zero, NSITypeInteger, 0, 1, 0 };
+				NSIConnect(
+					m_transformHandle.context(),
+					m_attributes->handle().name(), "",
+					lightSetNameAttributes.c_str(), "visibility",
+					1, &visibility
+				);
+			}
+
 			return true;
 		}
 
