@@ -1240,24 +1240,45 @@ class DelightObject: public IECoreScenePreview::Renderer::ObjectInterface
 			
 			if ( m_attributes->linkedLights() != "" )
 			{
-				std::string lightSetName = m_attributes->linkedLights();
-				std::string lightSetNameAttributes = lightSetName + "_attributes";
-				NSICreate( m_transformHandle.context(), lightSetName.c_str(), "set", 0, nullptr );
-				NSICreate( m_transformHandle.context(), lightSetNameAttributes.c_str(), "attributes", 0, nullptr );
-				NSIConnect(
-					m_transformHandle.context(),
-					lightSetNameAttributes.c_str(), "",
-					lightSetName.c_str(), "geometryattributes",
-					0, nullptr
-				);
-				const int zero = 0;
-				NSIParam_t visibility = { "value", &zero, NSITypeInteger, 0, 1, 0 };
-				NSIConnect(
-					m_transformHandle.context(),
-					m_attributes->handle().name(), "",
-					lightSetNameAttributes.c_str(), "visibility",
-					1, &visibility
-				);
+				std::string linkedLightsString = m_attributes->linkedLights();
+				std::replace( linkedLightsString.begin(), linkedLightsString.end(), '\n', ' ' );
+				vector<string> lightSets;
+				IECore::StringAlgo::tokenize( linkedLightsString, ' ', lightSets );
+				for( string lightSetName : lightSets )
+				{
+					if( boost::starts_with( lightSetName, "render:" ) || boost::starts_with( lightSetName, "/" ))
+					{
+						boost::trim_right(lightSetName);
+						std::string lightSetNameAttributes = lightSetName + "_attributes";
+						if ( boost::starts_with( lightSetName, "render:" ) ) 
+						{
+							NSICreate( m_transformHandle.context(), lightSetName.c_str(), "set", 0, nullptr );
+						}
+						else 
+						{
+							NSICreate( m_transformHandle.context(), lightSetName.c_str(), "transform", 0, nullptr );
+						}
+						NSICreate( m_transformHandle.context(), lightSetNameAttributes.c_str(), "attributes", 0, nullptr );
+						NSIConnect(
+							m_transformHandle.context(),
+							lightSetNameAttributes.c_str(), "",
+							lightSetName.c_str(), "geometryattributes",
+							0, nullptr
+						);
+						const int zero = 0;
+						NSIParam_t visibility = { "value", &zero, NSITypeInteger, 0, 1, 0 };
+						NSIConnect(
+							m_transformHandle.context(),
+							m_attributes->handle().name(), "",
+							lightSetNameAttributes.c_str(), "visibility",
+							1, &visibility
+						);
+					}
+					else
+					{
+						msg( Msg::Warning, "DelightRenderer", fmt::format( "Light linking works only with objects or \"render:\" sets - \"{}\" not supported", lightSetName ) );
+					}
+				}
 			}
 
 			return true;
