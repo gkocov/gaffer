@@ -49,7 +49,7 @@ class RenderPassAdaptorTest( GafferSceneTest.RenderPassAdaptorTest ) :
 
 	def setUp( self ) :
 
-		#GafferTest.TestCase.setUp( self )
+		GafferTest.TestCase.setUp( self )
 
 		self.ignoreMessage( IECore.Msg.Level.Warning, "DelightRenderer", "Attribute \"linkedLights\" not supported" )
 
