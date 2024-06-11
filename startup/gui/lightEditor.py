@@ -76,8 +76,10 @@ with IECore.IgnoredExceptions( ImportError ) :
 	for light in [
 		"pointLight",
 		"spotLight",
+		"areaLight",
 		"distantLight",
-		"environmentLight"
+		"environmentLight",
+		"hlight_sky"
 	] :
 		shader.loadShader( light )
 		for parameter in shader["parameters"] :

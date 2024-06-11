@@ -52,6 +52,11 @@ Gaffer.Metadata.registerValue( "osl:light:pointLight", "intensityParameter", "in
 Gaffer.Metadata.registerValue( "osl:light:pointLight", "exposureParameter", "exposure" )
 Gaffer.Metadata.registerValue( "osl:light:pointLight", "colorParameter", "i_color" )
 
+Gaffer.Metadata.registerValue( "osl:light:areaLight", "type", "quad" )
+Gaffer.Metadata.registerValue( "osl:light:areaLight", "intensityParameter", "intensity" )
+Gaffer.Metadata.registerValue( "osl:light:areaLight", "exposureParameter", "exposure" )
+Gaffer.Metadata.registerValue( "osl:light:areaLight", "colorParameter", "i_color" )
+
 Gaffer.Metadata.registerValue( "osl:light:distantLight", "type", "distant" )
 Gaffer.Metadata.registerValue( "osl:light:distantLight", "intensityParameter", "intensity" )
 Gaffer.Metadata.registerValue( "osl:light:distantLight", "exposureParameter", "exposure" )

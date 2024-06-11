@@ -195,7 +195,8 @@ if moduleSearchPath.find( "nsi.py" ) and moduleSearchPath.find( "GafferDelight" 
 		for label, shader, shape in [
 			[ "PointLight", "pointLight", GafferOSL.OSLLight.Shape.Sphere ],
 			[ "SpotLight", "spotLight", GafferOSL.OSLLight.Shape.Disk ],
-			[ "AreaLight", "areaLight", GafferOSL.OSLLight.Shape.Plane ],
+			[ "QuadAreaLight", "areaLight", GafferOSL.OSLLight.Shape.Plane ],
+			[ "QuadSpotLight", "spotLight", GafferOSL.OSLLight.Shape.Plane ],
 			[ "DistantLight", "distantLight", "distant" ],
 			[ "EnvironmentLight", "environmentLight", "environment" ],
 			[ "SkyLight", "hlight_sky", "environment" ],

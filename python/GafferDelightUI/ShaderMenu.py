@@ -85,8 +85,6 @@ def __shaderSubMenu( oslPath ) :
 			if shaderNiceName in [
 				"distantLight",
 				"directionalLight",
-				"pointLight",
-				"spotLight",
 				"environmentLight",
 				"displacementShader",
 				"builtinDisplacement",

@@ -70,7 +70,7 @@ OSLLight::OSLLight( const std::string &name )
 	// For the moment, keeping shaderName around makes it easier to support deprecated scripts, which contain
 	// a setValue on shaderName, and no loadShader
 	addChild( new StringPlug( "shaderName", Plug::In, "", Plug::Default & ~Plug::Serialisable ) );
-	addChild( new IntPlug( "shape", Plug::In, Disk, Sphere, Plane, Geometry ) );
+	addChild( new IntPlug( "shape", Plug::In, Disk, Disk, Plane, Geometry ) );
 	addChild( new FloatPlug( "radius", Plug::In, 0.01, 0 ) );
 	addChild( new StringPlug( "geometryType" ) );
 	addChild( new Box3fPlug( "geometryBound", Plug::In, Box3f( V3f( -1 ), V3f( 1 ) ) ) );
@@ -225,6 +225,16 @@ void OSLLight::hashSource( const Gaffer::Context *context, IECore::MurmurHash &h
 
 IECore::ConstObjectPtr OSLLight::computeSource( const Gaffer::Context *context ) const
 {
+	MeshPrimitivePtr planeGeom; 
+	V3fVectorDataPtr pData = new V3fVectorData;
+	std::vector<V3f> &p = pData->writable();
+	std::vector<int> verticesPerFace { 4 };
+	std::vector<int> vertexIds { 0, 1, 2, 3 };
+
+	V2fVectorDataPtr uvData = new V2fVectorData;
+	uvData->setInterpretation( GeometricData::UV );
+	std::vector<Imath::V2f> &uvs = uvData->writable();	
+
 	switch( shapePlug()->getValue() )
 	{
 		case Disk :
@@ -232,7 +242,17 @@ IECore::ConstObjectPtr OSLLight::computeSource( const Gaffer::Context *context )
 		case Sphere :
 			return new SpherePrimitive( radiusPlug()->getValue() );
 		case Plane :
-			return MeshPrimitive::createPlane( Box2f( V2f( -0.5f ), V2f( 0.5f ) ), V2i( 1 ), context->canceller() );
+			p.push_back( V3f ( 0.5f * radiusPlug()->getValue(), 0.5f * radiusPlug()->getValue(), 0 ) );
+			p.push_back( V3f ( 0.5f * radiusPlug()->getValue(), -0.5f * radiusPlug()->getValue(), 0 ) );
+			p.push_back( V3f ( -0.5f * radiusPlug()->getValue(), -0.5f * radiusPlug()->getValue(), 0 ) );
+			p.push_back( V3f ( -0.5f * radiusPlug()->getValue(), 0.5f * radiusPlug()->getValue(), 0 ) );
+			uvs.push_back( V2f( 0, 1.0f ) );
+			uvs.push_back( V2f( 0, 0 ) );
+			uvs.push_back( V2f( 1.0f, 0 ) );
+			uvs.push_back( V2f( 1.0f, 1.0f ) );
+			planeGeom = new MeshPrimitive( new IntVectorData( verticesPerFace ), new IntVectorData( vertexIds ), "linear", pData );
+			planeGeom->variables["uv"] = PrimitiveVariable( PrimitiveVariable::FaceVarying, uvData, new IntVectorData( vertexIds ) );
+			return planeGeom;
 		case Geometry :
 		{
 			CompoundDataPtr parameters = new CompoundData;
