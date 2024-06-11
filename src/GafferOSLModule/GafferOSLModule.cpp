@@ -251,6 +251,7 @@ BOOST_PYTHON_MODULE( _GafferOSL )
 		enum_<OSLLight::Shape>( "Shape" )
 			.value( "Disk", OSLLight::Disk )
 			.value( "Sphere", OSLLight::Sphere )
+			.value( "Plane", OSLLight::Plane )
 			.value( "Geometry", OSLLight::Geometry )
 		;
 	}

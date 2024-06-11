@@ -86,6 +86,7 @@ Gaffer.Metadata.registerNode(
 
 			"preset:Disk", GafferOSL.OSLLight.Shape.Disk,
 			"preset:Sphere", GafferOSL.OSLLight.Shape.Sphere,
+			"preset:Plane", GafferOSL.OSLLight.Shape.Plane,
 			"preset:Geometry", GafferOSL.OSLLight.Shape.Geometry,
 
 			"plugValueWidget:type", "GafferUI.PresetsPlugValueWidget",

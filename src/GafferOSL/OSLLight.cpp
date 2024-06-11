@@ -45,6 +45,7 @@
 
 #include "IECoreScene/DiskPrimitive.h"
 #include "IECoreScene/SpherePrimitive.h"
+#include "IECoreScene/MeshPrimitive.h"
 
 #include "IECore/NullObject.h"
 
@@ -69,7 +70,7 @@ OSLLight::OSLLight( const std::string &name )
 	// For the moment, keeping shaderName around makes it easier to support deprecated scripts, which contain
 	// a setValue on shaderName, and no loadShader
 	addChild( new StringPlug( "shaderName", Plug::In, "", Plug::Default & ~Plug::Serialisable ) );
-	addChild( new IntPlug( "shape", Plug::In, Disk, Disk, Geometry ) );
+	addChild( new IntPlug( "shape", Plug::In, Disk, Sphere, Plane, Geometry ) );
 	addChild( new FloatPlug( "radius", Plug::In, 0.01, 0 ) );
 	addChild( new StringPlug( "geometryType" ) );
 	addChild( new Box3fPlug( "geometryBound", Plug::In, Box3f( V3f( -1 ), V3f( 1 ) ) ) );
@@ -230,6 +231,8 @@ IECore::ConstObjectPtr OSLLight::computeSource( const Gaffer::Context *context )
 			return new DiskPrimitive( radiusPlug()->getValue() );
 		case Sphere :
 			return new SpherePrimitive( radiusPlug()->getValue() );
+		case Plane :
+			return MeshPrimitive::createPlane( Box2f( V2f( -0.5f ), V2f( 0.5f ) ), V2i( 1 ), context->canceller() );
 		case Geometry :
 		{
 			CompoundDataPtr parameters = new CompoundData;

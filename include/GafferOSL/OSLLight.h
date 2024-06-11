@@ -66,7 +66,8 @@ class GAFFEROSL_API OSLLight : public GafferScene::Light
 		{
 			Disk = 0,
 			Sphere = 1,
-			Geometry = 2
+			Plane = 2,
+			Geometry = 3
 		};
 
 		Gaffer::IntPlug *shapePlug();
