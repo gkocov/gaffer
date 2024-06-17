@@ -242,10 +242,10 @@ IECore::ConstObjectPtr OSLLight::computeSource( const Gaffer::Context *context )
 		case Sphere :
 			return new SpherePrimitive( radiusPlug()->getValue() );
 		case Plane :
-			p.push_back( V3f ( 0.5f * radiusPlug()->getValue(), 0.5f * radiusPlug()->getValue(), 0 ) );
-			p.push_back( V3f ( 0.5f * radiusPlug()->getValue(), -0.5f * radiusPlug()->getValue(), 0 ) );
-			p.push_back( V3f ( -0.5f * radiusPlug()->getValue(), -0.5f * radiusPlug()->getValue(), 0 ) );
-			p.push_back( V3f ( -0.5f * radiusPlug()->getValue(), 0.5f * radiusPlug()->getValue(), 0 ) );
+			p.push_back( V3f ( 1.0f * radiusPlug()->getValue(), 1.0f * radiusPlug()->getValue(), 0 ) );
+			p.push_back( V3f ( 1.0f * radiusPlug()->getValue(), -1.0f * radiusPlug()->getValue(), 0 ) );
+			p.push_back( V3f ( -1.0f * radiusPlug()->getValue(), -1.0f * radiusPlug()->getValue(), 0 ) );
+			p.push_back( V3f ( -1.0f * radiusPlug()->getValue(), 1.0f * radiusPlug()->getValue(), 0 ) );
 			uvs.push_back( V2f( 0, 1.0f ) );
 			uvs.push_back( V2f( 0, 0 ) );
 			uvs.push_back( V2f( 1.0f, 0 ) );
