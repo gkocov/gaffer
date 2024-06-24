@@ -7,6 +7,8 @@ Improvements
 - CameraTweaks : Added `ignoreMissing` plug to align behaviour with the other Tweaks nodes.
 - AttributeTweaks : The `{source}` substitution for `linkedLights` now expands to `defaultLights` if the attribute doesn't exist yet. This makes tweaks such as `({source}) - unwantedLights` reliable even if no light links have been authored yet.
 - ImageReader : Non-standard "r", "g", "b" and "a" channel names are now automatically renamed to "R", "G", "B" and "A" on loading. As with other heuristics, this can be disabled by setting `channelInterpretation` to "EXR Specification".
+- Metadata : Metadata registered to a node or plug targeting a descendant plug will now override metadata registered locally to the target.
+- OptionTweaks, ContextVariableTweaks : Added `Remove` mode.
 
 Breaking Changes
 ----------------
@@ -15,14 +17,54 @@ Breaking Changes
 - TweakPlug : Remove deprecated `MissingMode::IgnoreOrReplace`.
 - AttributeTweaks : `Replace` mode no longer errors if the `linkedLights` attribute doesn't exist.
 - ImageReader : Changed handling of lower-cased "r", "g", "b" and "a" channels.
+- Metadata : Path based registrations to a Node or Plug now override equivalent registrations on its descendants.
+- TweakPlugValueWidget : Removed support for `tweakPlugValueWidget:allowCreate` and `tweakPlugValueWidget:allowRemove` metadata.
 
-1.4.x.x (relative to 1.4.7.0)
+1.4.x.x (relative to 1.4.8.0)
 =======
+
+
+
+1.4.8.0 (relative to 1.4.7.0)
+=======
+
+Improvements
+------------
+
+- SceneReader : ModelAPI `extentsHints` are now considered when loading the bounding box for a location in Gaffer. This can significantly reduce the time taken to load bounds for large USD assemblies. If necessary, this behaviour can be disabled by setting the `IECOREUSD_USE_MODELAPI_BOUNDS` environment variable with a value of `0`.
+- ColorChooser :
+  - Added channel names to identify sliders.
+  - Setting the saturation to zero no longer resets the hue and setting the value to zero no longer resets the hue and saturation.
+- RenderPassEditor : Added "Select Affected Objects" popup menu item.
+- Annotations :
+  - Added support for `{plug}` value substitutions in node annotations.
+  - Added <kbd>Ctrl</kbd> + <kbd>Enter</kbd> keyboard shortcut to annotation dialogue. This applies the annotation and closes the dialogue.
+- LightEditor : Added support for Arnold light blockers and barndoor, gobo and decay light filters.
 
 Fixes
 -----
 
 - Cycles : Fixed rendering to the Catalogue using the batch Render node (#5905). Note that rendering a mixture of Catalogue and file outputs is still not supported, and in this case any file outputs will be ignored.
+- CodeWidget : Fixed bug that could prevent changes from being committed while the completion menu was visible.
+- Loop : Fixed handling of empty `indexVariable`. This now disables the Loop instead of creating an unnamed context variable.
+- ColorChooser : Fixed emission of `colorChangedSignal()` while the widget was in an inconsistent internal state.
+- LazyMethod : Fixed errors caused by running idle callbacks without a valid Qt Widget.
+
+API
+---
+
+- LightEditor : Added `deregisterColumn()` method for removing columns.
+- ShaderUI : Added support for `nodeGadget:color` metadata registered against `{shaderType}:{shaderName}`, to specify per-shader colouring of nodes in the GraphEditor.
+- ArnoldShaderUI : Added support for `gaffer.nodeGadget.color` RGB metadata in `.mtd` files, to specify per-shader colouring of nodes in the GraphEditor.
+- Loop : Added `nextIterationContext()` method.
+- AnnotationsGadget : Added `annotationText()` method.
+- ParallelAlgoTest : Added `UIThreadCallHandler.receive()` method.
+- LightEditor : Added `registerShaderParameter()` method for registering parameters for shader attributes that are not the same as the `rendererKey`.
+
+Build
+-----
+
+- Cortex : Updated to version 10.5.9.0.
 
 1.4.7.0 (relative to 1.4.6.0)
 =======
@@ -588,10 +630,18 @@ Build
   - Removed QtNetworkAuth library.
 - USD : Updated to version 23.11.
 
-1.3.16.x (relative to 1.3.16.5)
+1.3.16.x (relative to 1.3.16.6)
 ========
 
 
+
+1.3.16.6 (relative to 1.3.16.5)
+========
+
+Fixes
+-----
+
+- LazyMethod : Fixed errors caused by running idle callbacks without a valid Qt Widget.
 
 1.3.16.5 (relative to 1.3.16.4)
 ========
