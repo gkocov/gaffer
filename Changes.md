@@ -10,6 +10,22 @@ Improvements
 - Metadata : Metadata registered to a node or plug targeting a descendant plug will now override metadata registered locally to the target.
 - OptionTweaks, ContextVariableTweaks : Added `Remove` mode.
 
+Fixes
+-----
+
+- Editor : Fixed `Internal C++ object already deleted` errors when some editors were destroyed.
+- UVInspector : Fixed `Unable to find ScriptNode for UVView` warnings.
+- Scene Editors : Fixed update when ScenePlugs are added to or removed from the node being viewed.
+- PrimitiveInspector : Fixed failure to update when the location being viewed ceases to exist, or is recreated.
+
+API
+---
+
+- Editor :
+  - Added `settings()` method, which returns a node hosting plugs specifying settings for the editor.
+  - Added `_updateFromSettings()` method, which is called when a subclass should update to reflect changes to the settings.
+- SceneEditor : Added new base class to simplify the creation of scene-specific editors.
+
 Breaking Changes
 ----------------
 
@@ -19,6 +35,7 @@ Breaking Changes
 - ImageReader : Changed handling of lower-cased "r", "g", "b" and "a" channels.
 - Metadata : Path based registrations to a Node or Plug now override equivalent registrations on its descendants.
 - TweakPlugValueWidget : Removed support for `tweakPlugValueWidget:allowCreate` and `tweakPlugValueWidget:allowRemove` metadata.
+- Editor : Removed arguments from `Settings` constructor.
 
 1.4.x.x (relative to 1.4.8.0)
 =======
@@ -28,6 +45,16 @@ Improvements
 
 - Cryptomatte : Renamed `__manifestScene` plug to `manifestScene` so it is no longer considered to be private.
 - EditScopePlugValueWidget : Width can now be configured via `<layoutName>:width` metadata. This enables customisation of the Edit Scope menu width by registering metadata in a startup file, such as `Gaffer.Metadata.registerValue( GafferSceneUI.RenderPassEditor.Settings, "editScope", "layout:width", 450 )` to double the standard width of the Edit Scope menu in the Render Pass Editor.
+- ArnoldShader :
+  - The following parameters are now visible in the GraphEditor :
+    - The `aov_input` parameter of the `aov_write_int` shader.
+    - The `data_input` parameter of the `color_jitter` shader.
+    - The `input_int` and `seed` parameters of the `random` shader.
+    - The `index` parameters of the `switch_rgba` and `switch_shader` shaders.
+    - The `default` parameter of the `user_data_int` shader.
+  - The following parameters can now be made visible in the GraphEditor :
+    - The `flake_layers` parameter of the `car_paint` shader.
+    - The `data_seed`, `proc_seed`, `obj_seed`, and `face_seed` parameters of the `color_jitter` shader.
 
 Fixes
 -----
@@ -35,6 +62,8 @@ Fixes
 - HierarchyView, LightEditor, PrimitiveInspector, SceneInspector : Fixed bug which allowed scenes from private plugs to be displayed.
 - PrimitiveInspector : Fixed bug which claimed "Location does not exist" for objects without any primitive variables.
 - OpenColorIO : Fixed the display transform used to show colours in popups.
+- SceneInspector : Fixed "Show History" menu items.
+- ImageGadget : Fixed loading of non-8-bit images. Among other things, this fixes the display of 16 bit node icons in the GraphEditor.
 
 API
 ---
