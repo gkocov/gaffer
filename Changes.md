@@ -12,6 +12,10 @@ Improvements
 - Premultiply, Unpremultiply :
   - Added `ignoreMissingAlpha` plug.
   - Optimised the pass-through of the alpha channel.
+- GraphGadget :
+  - Improved highlighting of active nodes, with more accurate tracking of Loop node iterations.
+  - Annotation `{plug}` substitutions are now evaluated in a context determined relative to the focus node.
+  - The strike-through for disabled nodes is now evaluated in a context determined relative to the focus node.
 
 Fixes
 -----
@@ -21,6 +25,7 @@ Fixes
 - Scene Editors : Fixed update when ScenePlugs are added to or removed from the node being viewed.
 - PrimitiveInspector : Fixed failure to update when the location being viewed ceases to exist, or is recreated.
 - Shuffle, ShuffleAttributes, ShufflePrimitiveVariables : Fixed some special cases where shuffling a source to itself would fail to have the expected effect.
+- GraphEditor : Fixed dimming of labels for BoxIn and BoxOut nodes.
 
 API
 ---
@@ -29,6 +34,10 @@ API
   - Added `settings()` method, which returns a node hosting plugs specifying settings for the editor.
   - Added `_updateFromSettings()` method, which is called when a subclass should update to reflect changes to the settings.
 - SceneEditor : Added new base class to simplify the creation of scene-specific editors.
+- PlugValueWidget :
+  - A `DeprecationWarning` is now emitted for any subclasses still implementing the legacy `_updateFromPlug()` or `_updateFromPlugs()` methods. Implement `_updateFromValues()`, `_updateFromMetadata()` and `_updateFromEditable()` instead.
+  - A `DeprecationWarning` is now emitted by `_plugConnections()`. Use `_blockedUpdateFromValues()` instead.
+- NodeGadget, ConnectionGadget : Added `updateFromContextTracker()` virtual methods.
 
 Breaking Changes
 ----------------
@@ -45,6 +54,8 @@ Breaking Changes
 - Editor, NodeToolbar, PlugLayout, PlugValueWidget :
   - Removed `setContext()` methods.
   - Deprecated `getContext()` methods. Use `context()` instead.
+- Loop : Removed `nextIterationContext()` method.
+- NodeGadget, ConnectionGadget : Removed `activeForFocusNode()` virtual methods. Override `updateFromContextTracker()` instead.
 
 1.4.x.x (relative to 1.4.9.0)
 =======
@@ -52,7 +63,10 @@ Breaking Changes
 Improvements
 ------------
 
-- LightEditor : Values of inherited attributes are now displayed in the Light Editor. These are presented as dimmed "fallback" values.
+- LightEditor :
+  - Values of inherited attributes are now displayed in the Light Editor. These are presented as dimmed "fallback" values. Values are inherited from an ancestor of the inspected location or from attributes created in the scene globals.
+  - Default values are now displayed as dimmed "fallback" values for attributes that don't exist in the scene.
+  - When a fallback value is displayed, the cell's tooltip includes a description of the source of the value.
 - LightEditor, RenderPassEditor : Fallback values shown in the history window are displayed with the same dimmed text colour used for fallback values in editor columns.
 - EditScope : Filtered the EditScope menu to show only nodes that are active in the relevant context.
 
@@ -61,6 +75,7 @@ Fixes
 
 - ImageReader : Fixed crash caused by invalid OpenEXR `multiView` attributes.
 - LightEditor, RenderPassEditor : Added missing icon representing use of the `CreateIfMissing` tweak mode in the history window.
+- Slider : Fixed bug where two undo steps were needed to get back to the original value when dragging.
 
 API
 ---
@@ -723,7 +738,12 @@ Build
   - Removed QtNetworkAuth library.
 - USD : Updated to version 23.11.
 
-1.3.16.x (relative to 1.3.16.6)
+1.3.16.x (relative to 1.3.16.7)
+========
+
+
+
+1.3.16.7 (relative to 1.3.16.6)
 ========
 
 Fixes
@@ -731,6 +751,7 @@ Fixes
 
 - ImageReader : Fixed crash caused by invalid OpenEXR `multiView` attributes.
 - LightEditor, RenderPassEditor : Added missing icon representing use of the `CreateIfMissing` tweak mode in the history window.
+- Slider : Fixed bug where two undo steps were needed to get back to the original value when dragging.
 
 1.3.16.6 (relative to 1.3.16.5)
 ========
