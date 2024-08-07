@@ -16,6 +16,11 @@ Improvements
   - Improved highlighting of active nodes, with more accurate tracking of Loop node iterations.
   - Annotation `{plug}` substitutions are now evaluated in a context determined relative to the focus node.
   - The strike-through for disabled nodes is now evaluated in a context determined relative to the focus node.
+  - Custom dot labels are now evaluated in a context determined relative to the focus node.
+- LightEditor :
+  - Improved formatting of column headers containing whitespace.
+  - The "Double-click to toggle" tooltip is no longer displayed while hovering over non-editable cells, and a "Double-click to edit" tooltip is now displayed while hovering over other non-toggleable but editable cells.
+- Spreadsheet : Added yellow underlining to the currently active row.
 
 Fixes
 -----
@@ -25,8 +30,11 @@ Fixes
 - Scene Editors : Fixed update when ScenePlugs are added to or removed from the node being viewed.
 - PrimitiveInspector : Fixed failure to update when the location being viewed ceases to exist, or is recreated.
 - Shuffle, ShuffleAttributes, ShufflePrimitiveVariables : Fixed some special cases where shuffling a source to itself would fail to have the expected effect.
-- GraphEditor : Fixed dimming of labels for BoxIn and BoxOut nodes.
+- GraphEditor :
+  - Fixed dimming of labels for BoxIn and BoxOut nodes.
+  - Fixed update of custom context-sensitive labels on Dot nodes.
 - GafferCortexUI : Removed usage of legacy PlugValueWidget API.
+- Dispatcher : Fixed crashes caused by a dispatcher's `SetupPlugsFn` attempting to access the TaskNode it was being called for. Dispatchers may now introspect the TaskNode and add different plugs based on type (#915).
 
 API
 ---
@@ -39,6 +47,7 @@ API
   - A `DeprecationWarning` is now emitted for any subclasses still implementing the legacy `_updateFromPlug()` or `_updateFromPlugs()` methods. Implement `_updateFromValues()`, `_updateFromMetadata()` and `_updateFromEditable()` instead.
   - A `DeprecationWarning` is now emitted by `_plugConnections()`. Use `_blockedUpdateFromValues()` instead.
 - NodeGadget, ConnectionGadget : Added `updateFromContextTracker()` virtual methods.
+- Path : Added `inspectionContext()` virtual method.
 
 Breaking Changes
 ----------------
@@ -65,7 +74,15 @@ Improvements
 ------------
 
 - SetExpressions : Set Expressions containing only whitespace characters are now treated as empty rather than producing an error.
-- ArnoldShader : Moved Arnold 7.3.3.0's new `standard_volume.scatter_diffusion` parameters to a "Scatter Diffusion" section of the UI.
+- ArnoldShader :
+  - Added a UI layout for the new `openpbr_surface` shader.
+  - Moved Arnold 7.3.3.0's new `standard_volume.scatter_diffusion` parameters to a "Scatter Diffusion" section of the UI.
+- Viewer : Added diagnostic shading mode for visualising the values of the `usd:purpose` attribute as colours :
+  - White : Default
+  - Green : Render
+  - Blue : Proxy
+  - Red : Guide
+- Catalogue : Added a handle for controlling the relative sizes of the listing and image property widgets.
 
 Fixes
 -----
@@ -73,6 +90,11 @@ Fixes
 - Arnold : Fixed bug preventing UI metadata for Imagers from being loaded for Arnold 7.3.
 - WidgetAlgo : Fixed issue preventing `grab()` from capturing popup menus on Windows.
 - ShowURL : Fixed opening of "file://" URLs on Windows (#5861).
+- Shader : Fixed "Revert to Defaults" menu item in NodeEditor (#1862).
+- Catalogue :
+  - Fixed bug which allowed locked Catalogues to be edited.
+  - Fixed NodeEditor update when the first image is added or the last image is removed.
+- NameWidget : Fixed bug which allowed plugs on locked nodes to be renamed.
 
 API
 ---

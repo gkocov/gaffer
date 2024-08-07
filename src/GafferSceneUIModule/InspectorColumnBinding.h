@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (c) 2014, Image Engine Design Inc. All rights reserved.
+//  Copyright (c) 2024, Cinesite VFX Ltd. All rights reserved.
 //
 //  Redistribution and use in source and binary forms, with or without
 //  modification, are permitted provided that the following conditions are
@@ -36,62 +36,9 @@
 
 #pragma once
 
-#include "GafferUI/StandardNodeGadget.h"
-
-#include "Gaffer/Dot.h"
-
-namespace Gaffer
+namespace GafferSceneUIModule
 {
 
-IE_CORE_FORWARDDECLARE( Context )
-IE_CORE_FORWARDDECLARE( Plug )
+void bindInspectorColumn();
 
-} // namespace Gaffer
-
-namespace GafferUI
-{
-
-class GAFFERUI_API DotNodeGadget : public StandardNodeGadget
-{
-
-	public :
-
-		GAFFER_GRAPHCOMPONENT_DECLARE_TYPE( GafferUI::DotNodeGadget, DotNodeGadgetTypeId, StandardNodeGadget );
-
-		explicit DotNodeGadget( Gaffer::NodePtr node );
-		~DotNodeGadget() override;
-
-		Imath::Box3f bound() const override;
-
-	protected :
-
-		void renderLayer( Layer layer, const Style *style, RenderReason reason ) const override;
-		void updateFromContextTracker( const ContextTracker *contextTracker ) override;
-
-	private :
-
-		Gaffer::Dot *dotNode();
-		const Gaffer::Dot *dotNode() const;
-		Gaffer::Node *upstreamNode();
-
-		void plugDirtied( const Gaffer::Plug *plug );
-		void nodeNameChanged( const Gaffer::GraphComponent *graphComponent );
-		void updateUpstreamNameChangedConnection();
-		void updateLabel();
-
-		bool dragEnter( const DragDropEvent &event );
-		bool drop( const DragDropEvent &event );
-
-		Gaffer::Signals::ScopedConnection m_upstreamNameChangedConnection;
-
-		Gaffer::ConstContextPtr m_labelContext;
-		std::string m_label;
-		Imath::V2f m_labelPosition;
-
-		static NodeGadgetTypeDescription<DotNodeGadget> g_nodeGadgetTypeDescription;
-
-};
-
-IE_CORE_DECLAREPTR( DotNodeGadget )
-
-} // namespace GafferUI
+} // namespace GafferSceneUIModule

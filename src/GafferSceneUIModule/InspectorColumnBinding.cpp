@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (c) 2014, Image Engine Design Inc. All rights reserved.
+//  Copyright (c) 2024, Cinesite VFX Ltd. All rights reserved.
 //
 //  Redistribution and use in source and binary forms, with or without
 //  modification, are permitted provided that the following conditions are
@@ -34,64 +34,46 @@
 //
 //////////////////////////////////////////////////////////////////////////
 
-#pragma once
+#include "boost/python.hpp"
 
-#include "GafferUI/StandardNodeGadget.h"
+#include "InspectorColumnBinding.h"
 
-#include "Gaffer/Dot.h"
+#include "GafferSceneUI/Private/Inspector.h"
+#include "GafferSceneUI/Private/InspectorColumn.h"
 
-namespace Gaffer
+#include "GafferUI/PathColumn.h"
+
+#include "IECorePython/RefCountedBinding.h"
+
+using namespace boost::python;
+using namespace IECorePython;
+using namespace GafferUI;
+using namespace GafferSceneUI::Private;
+
+void GafferSceneUIModule::bindInspectorColumn()
 {
 
-IE_CORE_FORWARDDECLARE( Context )
-IE_CORE_FORWARDDECLARE( Plug )
+	object privateModule( borrowed( PyImport_AddModule( "GafferSceneUI.Private" ) ) );
+	scope().attr( "Private" ) = privateModule;
+	scope privateScope( privateModule );
 
-} // namespace Gaffer
+	RefCountedClass<GafferSceneUI::Private::InspectorColumn, GafferUI::PathColumn>( "InspectorColumn" )
+		.def( init<GafferSceneUI::Private::InspectorPtr, const std::string &, const std::string &, PathColumn::SizeMode>(
+			(
+				arg_( "inspector" ),
+				arg_( "label" ) = "",
+				arg_( "toolTip" ) = "",
+				arg( "sizeMode" ) = PathColumn::Default
+			)
+		) )
+		.def( init<GafferSceneUI::Private::InspectorPtr, const PathColumn::CellData &, PathColumn::SizeMode>(
+			(
+				arg_( "inspector" ),
+				arg_( "headerData" ),
+				arg_( "sizeMode" ) = PathColumn::Default
+			)
+		) )
+		.def( "inspector", &InspectorColumn::inspector, return_value_policy<CastToIntrusivePtr>() )
+	;
 
-namespace GafferUI
-{
-
-class GAFFERUI_API DotNodeGadget : public StandardNodeGadget
-{
-
-	public :
-
-		GAFFER_GRAPHCOMPONENT_DECLARE_TYPE( GafferUI::DotNodeGadget, DotNodeGadgetTypeId, StandardNodeGadget );
-
-		explicit DotNodeGadget( Gaffer::NodePtr node );
-		~DotNodeGadget() override;
-
-		Imath::Box3f bound() const override;
-
-	protected :
-
-		void renderLayer( Layer layer, const Style *style, RenderReason reason ) const override;
-		void updateFromContextTracker( const ContextTracker *contextTracker ) override;
-
-	private :
-
-		Gaffer::Dot *dotNode();
-		const Gaffer::Dot *dotNode() const;
-		Gaffer::Node *upstreamNode();
-
-		void plugDirtied( const Gaffer::Plug *plug );
-		void nodeNameChanged( const Gaffer::GraphComponent *graphComponent );
-		void updateUpstreamNameChangedConnection();
-		void updateLabel();
-
-		bool dragEnter( const DragDropEvent &event );
-		bool drop( const DragDropEvent &event );
-
-		Gaffer::Signals::ScopedConnection m_upstreamNameChangedConnection;
-
-		Gaffer::ConstContextPtr m_labelContext;
-		std::string m_label;
-		Imath::V2f m_labelPosition;
-
-		static NodeGadgetTypeDescription<DotNodeGadget> g_nodeGadgetTypeDescription;
-
-};
-
-IE_CORE_DECLAREPTR( DotNodeGadget )
-
-} // namespace GafferUI
+}

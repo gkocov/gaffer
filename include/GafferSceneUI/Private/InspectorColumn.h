@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (c) 2014, Image Engine Design Inc. All rights reserved.
+//  Copyright (c) 2024, Cinesite VFX Ltd. All rights reserved.
 //
 //  Redistribution and use in source and binary forms, with or without
 //  modification, are permitted provided that the following conditions are
@@ -36,62 +36,51 @@
 
 #pragma once
 
-#include "GafferUI/StandardNodeGadget.h"
+#include "GafferSceneUI/Export.h"
+#include "GafferSceneUI/Private/Inspector.h"
 
-#include "Gaffer/Dot.h"
+#include "GafferUI/PathColumn.h"
 
-namespace Gaffer
+#include "Gaffer/Path.h"
+
+using namespace IECore;
+
+namespace GafferSceneUI
 {
 
-IE_CORE_FORWARDDECLARE( Context )
-IE_CORE_FORWARDDECLARE( Plug )
-
-} // namespace Gaffer
-
-namespace GafferUI
+namespace Private
 {
 
-class GAFFERUI_API DotNodeGadget : public StandardNodeGadget
+/// Column type which makes use of an Inspector.
+class GAFFERSCENEUI_API InspectorColumn : public GafferUI::PathColumn
 {
 
 	public :
 
-		GAFFER_GRAPHCOMPONENT_DECLARE_TYPE( GafferUI::DotNodeGadget, DotNodeGadgetTypeId, StandardNodeGadget );
+		IE_CORE_DECLAREMEMBERPTR( InspectorColumn )
 
-		explicit DotNodeGadget( Gaffer::NodePtr node );
-		~DotNodeGadget() override;
+		InspectorColumn( GafferSceneUI::Private::InspectorPtr inspector, const std::string &label, const std::string &toolTip = "", PathColumn::SizeMode sizeMode = Default );
+		InspectorColumn( GafferSceneUI::Private::InspectorPtr inspector, const CellData &headerData, PathColumn::SizeMode sizeMode = Default );
 
-		Imath::Box3f bound() const override;
+		/// Returns the inspector used by this column.
+		GafferSceneUI::Private::Inspector *inspector() const;
 
-	protected :
-
-		void renderLayer( Layer layer, const Style *style, RenderReason reason ) const override;
-		void updateFromContextTracker( const ContextTracker *contextTracker ) override;
+		CellData cellData( const Gaffer::Path &path, const IECore::Canceller *canceller ) const override;
+		CellData headerData( const IECore::Canceller *canceller ) const override;
 
 	private :
 
-		Gaffer::Dot *dotNode();
-		const Gaffer::Dot *dotNode() const;
-		Gaffer::Node *upstreamNode();
+		void inspectorDirtied();
 
-		void plugDirtied( const Gaffer::Plug *plug );
-		void nodeNameChanged( const Gaffer::GraphComponent *graphComponent );
-		void updateUpstreamNameChangedConnection();
-		void updateLabel();
+		static IECore::ConstStringDataPtr headerValue( const std::string &columnName );
 
-		bool dragEnter( const DragDropEvent &event );
-		bool drop( const DragDropEvent &event );
-
-		Gaffer::Signals::ScopedConnection m_upstreamNameChangedConnection;
-
-		Gaffer::ConstContextPtr m_labelContext;
-		std::string m_label;
-		Imath::V2f m_labelPosition;
-
-		static NodeGadgetTypeDescription<DotNodeGadget> g_nodeGadgetTypeDescription;
+		const Private::InspectorPtr m_inspector;
+		const CellData m_headerData;
 
 };
 
-IE_CORE_DECLAREPTR( DotNodeGadget )
+IE_CORE_DECLAREPTR( InspectorColumn )
 
-} // namespace GafferUI
+} // namespace Private
+
+} // namespace GafferSceneUI
