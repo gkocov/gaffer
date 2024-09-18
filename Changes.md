@@ -28,6 +28,7 @@ Improvements
 - Spreadsheet : Added yellow underlining to the currently active row.
 - PlugLayout : Summaries and activators are now evaluated in a context determined relative to the focus node.
 - Editor : The node graph is now evaluated in a context determined relative to the focus node.
+- LightEditor, RenderPassEditor : The "Disable Edit" right-click menu item and <kdb>D</kdb> shortcut now act as a toggle, where edits disabled in the current session via these actions can be reenabled with <kbd>D</kbd> or by selecting "Reenable Edit" from the right-click menu.
 
 Fixes
 -----
@@ -55,6 +56,8 @@ Fixes
 - FreezeTransform : Constant primitive variables with point/vector interpretations are now also transformed.
 - usdview : Added Windows support (#5599).
 - ContextTracker : Removed unnecessary reference increment/decrement from `isTracked()`, `context()` and `isEnabled()`.
+- Menu : Fixed bug causing a menu item's tooltip to not hide when moving the cursor to another menu item without a tooltip.
+- Python : Fixed startup failures caused by conflicting Python modules in the user `site-packages` directory.
 
 API
 ---
@@ -115,6 +118,7 @@ Breaking Changes
 - FreezeTransform : Constant primitive variables with point/vector interpretations are now also transformed (this is more correct, but it is a change in behaviour).
 - ImageGadget : Remove non-const variant of `getContext()`.
 - LazyMethod : `deferUntilPlaybackStops` now requires that the Widget has a `scriptNode()` method rather than a `context()` method.
+- Python : Gaffer now disables the user site-packages directory by setting `PYTHONNOUSERSITE=1`. To revert to the previous behaviour, set `PYTHONNOUSERSITE=0` before launching Gaffer.
 
 Build
 -----
@@ -137,7 +141,15 @@ Build
 1.4.x.x (relative to 1.4.12.0)
 =======
 
+Fixes
+-----
 
+- Constraint : The `target` browser now shows locations from the `targetScene` if it has an input connection. Before it always showed locations from the main input.
+
+API
+---
+
+- ScenePathPlugValueWidget : The `scenePathPlugValueWidget:scene` metadata now accepts a space-separated list of plugs, taking the first plug which has an input connection.
 
 1.4.12.0 (relative to 1.4.11.0)
 ========
