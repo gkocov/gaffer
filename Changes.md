@@ -1,5 +1,12 @@
-1.x.x.x (relative to 1.4.x.x)
+1.x.x.x (relative to 1.5.0.0a1)
 =======
+
+
+
+1.5.0.0a1 (relative to 1.4.13.0)
+=========
+
+> Note : Gaffer 1.5 marks the end of provision of GCC 9 builds on Linux. Use Gaffer 1.4 if you require GCC 9 builds.
 
 Features
 --------
@@ -30,6 +37,9 @@ Improvements
 - Editor : The node graph is now evaluated in a context determined relative to the focus node.
 - LightEditor, RenderPassEditor : The "Disable Edit" right-click menu item and <kdb>D</kdb> shortcut now act as a toggle, where edits disabled in the current session via these actions can be reenabled with <kbd>D</kbd> or by selecting "Reenable Edit" from the right-click menu.
 - EditScope : Setting a Viewer or Editor's target edit scope to "None" will now prevent edits from being made within any upstream edit scope. To make edits in an edit scope, it must be set as the target.
+- FreezeTransform :
+  - Improved performance for large meshes by using multithreading.
+  - Improved UI responsiveness by supporting cancellation of long computes.
 
 Fixes
 -----
@@ -139,18 +149,42 @@ Build
 - Zstandard : Added version 1.5.0.
 - Windows : Update compiler to Visual Studio 2022 / MSVC 17.8 / Runtime library 14.3.
 
-1.4.x.x (relative to 1.4.12.0)
+1.4.x.x (relative to 1.4.13.0)
 =======
+
+
+
+1.4.13.0 (relative to 1.4.12.0)
+========
+
+Improvements
+------------
+
+- NodeEditor, NameWidget : Invalid characters are automatically converted to `_` when renaming a node or plug, and `:` is no longer treated as invalid.
 
 Fixes
 -----
 
+- SceneReader :
+  - Fixed loading of facevarying normals skinned with UsdSkel.
+  - Stopped loading USD `lightLinks` and `shadowLinks` collections as sets.
+  - USD asset paths on Windows now use `/` as the path separator, instead of `\`. Set `IECOREUSD_FORCE_ASSET_PATH_FORWARD_SLASH=0` to keep the previous behaviour.
+- SceneWriter : Fixed crash when writing to a USD file that is already open elsewhere.
 - Constraint : The `target` browser now shows locations from the `targetScene` if it has an input connection. Before it always showed locations from the main input.
+- ImageInspector : Fixed broken UI caused by double-clicking in the Image tab.
 
 API
 ---
 
 - ScenePathPlugValueWidget : The `scenePathPlugValueWidget:scene` metadata now accepts a space-separated list of plugs, taking the first plug which has an input connection.
+- VisibleSet : Added Python constructor with keyword arguments for `expansions`, `inclusions` and `exclusions`.
+- ScriptNodeAlgo : Added new namespace with functions for managing shared UI state for GafferSceneUI.
+- ContextAlgo : Deprecated. Use ScriptNodeAlgo instead.
+
+Build
+-----
+
+- Cortex : Updated to version 10.5.9.4.
 
 1.4.12.0 (relative to 1.4.11.0)
 ========
