@@ -1,6 +1,18 @@
 1.x.x.x (relative to 1.5.0.0a1)
 =======
 
+Improvements
+------------
+
+- Arnold :
+  - Added location names to warning messages.
+  - A missing "P" primitive variable no longer aborts the render, but outputs a warning message instead.
+- Instancer :
+  - Improved Arnold raytracing performance for encapsulated instancers with many prototypes. All instances are now output in a single top-level procedural rather than a top-level procedural per prototype, resulting in more optimal BVH traversals in Arnold.
+  - Reduced scene generation time for encapsulated instancers by around 20%.
+- NodeEditor : Added <kbd>Alt</kbd> + middle-click action for showing context variable substitutions in strings.
+- LightEditor, RenderPassEditor : History windows now use a context determined relative to the current focus node.
+
 Fixes
 -----
 
@@ -8,6 +20,17 @@ Fixes
   - Fixed partial image updates when an unrelated InteractiveRender was running (#6043).
   - Fixed "colour tearing", where updates to some image channels became visible before updates to others.
   - Fixed unnecessary texture updates when specific image tiles don't change.
+- GraphEditor :
+  - Fixed lingering error badges (#3820).
+- RenderPassEditor :
+  - Fixed history window to update on context changes, for example, when the current frame is changed.
+  - Fixed invalid `scene:path` context variables created by the history window. [^1]
+
+Breaking Changes
+----------------
+
+- IECoreArnold : Added `messageContext` argument to `NodeAlgo::Converter` and `NodeAlgo::MotionConverter`.
+- Instancer : Renamed `encapsulateInstanceGroups` plug to `encapsulate`. Encapsulation now produces a single capsule at the `.../instances` location, instead of capsules at each `.../instances/<prototypeName>` location.
 
 [^1]: To be omitted from 1.5.0.0 release notes.
 
@@ -108,7 +131,7 @@ Breaking Changes
 ----------------
 
 - CameraTweaks : `Replace` mode now errors if the input parameter does not exist. Use `Create` mode or the new `ignoreMissing` plug instead.
-- TweakPlug : Remove deprecated `MissingMode::IgnoreOrReplace`.
+- TweakPlug : Removed deprecated `MissingMode::IgnoreOrReplace`.
 - AttributeTweaks : `Replace` mode no longer errors if the `linkedLights` attribute doesn't exist.
 - ImageReader : Changed handling of lower-cased "r", "g", "b" and "a" channels.
 - Metadata : Path based registrations to a Node or Plug now override equivalent registrations on its descendants.
@@ -172,6 +195,10 @@ Fixes
   - Fixed partial image updates when an unrelated InteractiveRender was running (#6043).
   - Fixed "colour tearing", where updates to some image channels became visible before updates to others.
   - Fixed unnecessary texture updates when specific image tiles don't change.
+- ArrayPlug :
+  - Fixed error when `resize()` removed plugs with input connections.
+  - Fixed error when `resize()` was used on an output plug.
+- CreateViews : Fixed loading of files saved from Gaffer 1.5+.
 
 1.4.13.0 (relative to 1.4.12.0)
 ========
@@ -974,6 +1001,10 @@ Fixes
   - Fixed partial image updates when an unrelated InteractiveRender was running (#6043).
   - Fixed "colour tearing", where updates to some image channels became visible before updates to others.
   - Fixed unnecessary texture updates when specific image tiles don't change.
+- ArrayPlug :
+  - Fixed error when `resize()` removed plugs with input connections.
+  - Fixed error when `resize()` was used on an output plug.
+- CreateViews : Fixed loading of files saved from Gaffer 1.5+.
 
 1.3.16.8 (relative to 1.3.16.7)
 ========
