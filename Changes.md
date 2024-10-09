@@ -13,7 +13,33 @@ Features
     - `staticComponent` : A single character string for the component to use as the static component for the color field. The other two components in the "RGB", "HSV" and "TMI" triplets will be controllable in the widget.
     - `colorFieldVisible` : A boolean indicating if the color field should be visible or not.
   - Added a menu item to the color chooser settings to save the UI configuration for the inline color chooser and the dialogue color chooser as a startup script to persist the configuration across Gaffer restarts.
+- MeshToLevelSet : Added `destination` plug, allowing multiple input meshes to be merged into a single level set at an arbitrary location.
+- LevelSetToMesh : Added `destination` plug, allowing multiple input level sets to be merged into a single mesh at an arbitrary location.
 
+Improvements
+------------
+
+- Cycles :
+  - Added `is_sphere` plug to spot and point lights. Disabling `is_sphere` is equivalent to enabling "Soft Falloff" in Blender, which reverts the light to the behaviour of Cycles 3.6 and earlier.
+  - Changed sampling pattern to blue noise dithered sampling.
+  - Spot, disk, quad and point light strength now better match Blender, Arnold and hdCycles. As a result these lights are now `pi` times brighter at the same intensity when compared with previous versions. If necessary, this adjustment can be disabled by setting the `GAFFERCYCLES_USE_LEGACY_LIGHTS` environment variable with a value of `1`.
+- Arnold : Added support for Int64Data and UInt64Data custom attributes, allowing USD's `instanceId` to be used as a custom attribute in the Instancer node. Warnings are emitted if values are out of range for Arnold's 32 bit ints. [^1]
+
+Fixes
+-----
+
+- Cycles : Fixed issue where scaling unnormalized quad and disk lights would not affect their brightness.
+- ShaderView : Fixed crash caused by a SceneCreator returning `None`. [^1]
+
+Breaking Changes
+----------------
+
+- Cycles : Removed custom handling of unnormalized lights. We now rely on Cycles' inbuilt behaviour which results in a brightness difference for unnormalized point, spot and disk lights.
+- MeshToLevelSet : Objects which are not meshes are now converted to an empty VDB grid, instead of being left unchanged.
+- LevelSetToMesh :
+  - Objects which are not level sets are now converted to an empty mesh, instead of being left unchanged.
+  - Removed the `adjustBounds` plug. In the rare case where it is important to recompute slightly tighter bounds, one workaround is to use ShufflePrimitiveVariables to shuffle from "P" to "P" with `adjustBounds` checked.
+  - Removed support for grid types other than `FloatGrid`. If other types are required, please request them.
 
 1.5.0.0a2 (relative to 1.5.0.0a1)
 =========
@@ -217,7 +243,15 @@ Build
 1.4.x.x (relative to 1.4.14.0)
 =======
 
+Improvements
+------------
 
+- Arnold : Added support for Int64Data and UInt64Data custom attributes, allowing USD's `instanceId` to be used as a custom attribute in the Instancer node. Warnings are emitted if values are out of range for Arnold's 32 bit ints.
+
+Fixes
+-----
+
+- ShaderView : Fixed crash caused by a SceneCreator returning `None`.
 
 1.4.14.0 (relative to 1.4.13.0)
 ========
