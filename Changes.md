@@ -1,5 +1,10 @@
-1.x.x.x (relative to 1.5.0.0a2)
+1.x.x.x (relative to 1.5.0.0a3)
 =======
+
+
+
+1.5.0.0a3 (relative to 1.5.0.0a2)
+=========
 
 Features
 --------
@@ -15,6 +20,7 @@ Features
   - Added a menu item to the color chooser settings to save the UI configuration for the inline color chooser and the dialogue color chooser as a startup script to persist the configuration across Gaffer restarts.
 - MeshToLevelSet : Added `destination` plug, allowing multiple input meshes to be merged into a single level set at an arbitrary location.
 - LevelSetToMesh : Added `destination` plug, allowing multiple input level sets to be merged into a single mesh at an arbitrary location.
+- Cycles : Added support for OSL shading with Optix devices.
 
 Improvements
 ------------
@@ -23,12 +29,15 @@ Improvements
   - Added `is_sphere` plug to spot and point lights. Disabling `is_sphere` is equivalent to enabling "Soft Falloff" in Blender, which reverts the light to the behaviour of Cycles 3.6 and earlier.
   - Changed sampling pattern to blue noise dithered sampling.
   - Spot, disk, quad and point light strength now better match Blender, Arnold and hdCycles. As a result these lights are now `pi` times brighter at the same intensity when compared with previous versions. If necessary, this adjustment can be disabled by setting the `GAFFERCYCLES_USE_LEGACY_LIGHTS` environment variable with a value of `1`.
+  - Simplified presentation of `principled_bsdf`, `principled_hair_bsdf`, and `principled_volume` shaders in the Graph Editor. A subset of parameter nodules are now visible by default, the remainder can be accessed by clicking on or connecting to the node's `+` icon and choosing the parameter to make visible.
 - Arnold : Added support for Int64Data and UInt64Data custom attributes, allowing USD's `instanceId` to be used as a custom attribute in the Instancer node. Warnings are emitted if values are out of range for Arnold's 32 bit ints. [^1]
 
 Fixes
 -----
 
+- Viewer : Fixed hangs when focussing a node for the first time (bug introduced in 1.5.0.0a2). [^1]
 - Cycles : Fixed issue where scaling unnormalized quad and disk lights would not affect their brightness.
+- SceneReader : Fixed crash reading facevarying normals skinned with UsdSkel. [^1]
 - ShaderView : Fixed crash caused by a SceneCreator returning `None`. [^1]
 
 Breaking Changes
@@ -40,6 +49,14 @@ Breaking Changes
   - Objects which are not level sets are now converted to an empty mesh, instead of being left unchanged.
   - Removed the `adjustBounds` plug. In the rare case where it is important to recompute slightly tighter bounds, one workaround is to use ShufflePrimitiveVariables to shuffle from "P" to "P" with `adjustBounds` checked.
   - Removed support for grid types other than `FloatGrid`. If other types are required, please request them.
+
+Build
+-----
+
+- Cortex : Updated to version 10.5.9.5.
+- OpenShadingLanguage :
+  - Updated to version 1.13.11.0.
+  - Enabled Optix support.
 
 1.5.0.0a2 (relative to 1.5.0.0a1)
 =========
@@ -240,8 +257,13 @@ Build
 - Zstandard : Added version 1.5.0.
 - Windows : Update compiler to Visual Studio 2022 / MSVC 17.8 / Runtime library 14.3.
 
-1.4.x.x (relative to 1.4.14.0)
+1.4.x.x (relative to 1.4.15.0)
 =======
+
+
+
+1.4.15.0 (relative to 1.4.14.0)
+========
 
 Improvements
 ------------
@@ -251,7 +273,13 @@ Improvements
 Fixes
 -----
 
+- SceneReader : Fixed crash reading facevarying normals skinned with UsdSkel.
 - ShaderView : Fixed crash caused by a SceneCreator returning `None`.
+
+Build
+-----
+
+- Cortex : Updated to version 10.5.9.5.
 
 1.4.14.0 (relative to 1.4.13.0)
 ========
