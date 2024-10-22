@@ -1,6 +1,6 @@
 ##########################################################################
 #
-#  Copyright (c) 2012, John Haddon. All rights reserved.
+#  Copyright (c) 2024, Cinesite VFX Ltd. All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions are
@@ -34,16 +34,50 @@
 #
 ##########################################################################
 
-__import__( "GafferDispatch" )
-__import__( "Gaffer" )
-__import__( "IECoreImage" )
+import unittest
 
-from ._GafferImage import *
-from .CatalogueSelect import CatalogueSelect
-from .BleedFill import BleedFill
-from .DeepTidy import DeepTidy
-from .Anaglyph import Anaglyph
-from .ContactSheet import ContactSheet
-from .MetadataOverlay import MetadataOverlay
+import Gaffer
+import GafferSceneUI
+import GafferUITest
 
-__import__( "IECore" ).loadConfig( "GAFFER_STARTUP_PATHS", subdirectory = "GafferImage" )
+class AttributeEditorTest( GafferUITest.TestCase ) :
+
+	def testRegisterAttribute( self ) :
+
+		attributeNames = [ "test:visible", "test:this", "test:that", "test:other" ]
+
+		for attribute in attributeNames :
+			GafferSceneUI.AttributeEditor.registerAttribute( "Standard", attribute, "testSection" )
+			self.addCleanup( GafferSceneUI.AttributeEditor.deregisterColumn, "Standard", attribute, "testSection" )
+
+		script = Gaffer.ScriptNode()
+		editor = GafferSceneUI.AttributeEditor( script )
+		editor.settings()["section"].setValue( "testSection" )
+		GafferSceneUI.AttributeEditor._AttributeEditor__updateColumns.flush( editor )
+
+		columnAttributes = [
+			c.inspector().name() for c in editor.sceneListing().getColumns()
+			if isinstance( c, GafferSceneUI.Private.InspectorColumn )
+		]
+
+		for attribute in attributeNames :
+			self.assertIn( attribute, columnAttributes )
+
+		GafferSceneUI.AttributeEditor.deregisterColumn( "Standard", "test:visible", "testSection" )
+
+		editor._AttributeEditor__updateColumns()
+		GafferSceneUI.AttributeEditor._AttributeEditor__updateColumns.flush( editor )
+
+		columnAttributes = [
+			c.inspector().name() for c in editor.sceneListing().getColumns()
+			if isinstance( c, GafferSceneUI.Private.InspectorColumn )
+		]
+
+		for attribute in attributeNames :
+			if attribute != "test:visible" :
+				self.assertIn( attribute, columnAttributes )
+			else :
+				self.assertNotIn( attribute, columnAttributes )
+
+if __name__ == "__main__":
+	unittest.main()

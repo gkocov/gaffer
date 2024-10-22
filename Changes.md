@@ -1,6 +1,12 @@
 1.x.x.x (relative to 1.5.0.0a3)
 =======
 
+Features
+--------
+
+- AttributeEditor : Added a new editor UI for inspecting and editing attributes. This can be found in the tab next to the RenderPassEditor in the Standard layouts.
+- MetadataOverlay : Added a new node for adding metadata overlays to images, with control over formatting, layout, font and drop shadow.
+
 Improvements
 ------------
 
@@ -10,11 +16,14 @@ Improvements
   - Changed the color field widget to a color wheel when hue is one of the varying components. [^1]
   - Changed the indicator for the color field and color sliders to an unfilled circle so the chosen color is visible in the center.
 - PythonEditor, PythonCommand, Expression, UIEditor, OSLCode : Added line numbers to code editors (#6091).
+- CyclesOptions : Added `denoiseDevice` plug for configuring the device used for denoising.
+- AttributeTweaks : Added tooltips and presets for all attribute values.
 
 Fixes
 -----
 
 - Expression, OSLCode : Fixed line numbers reported in OSL parse errors.
+- PathColumn : Fixed display of swatches for cells containing `Color4fData`.
 
 API
 ---
@@ -25,6 +34,7 @@ API
   - Added `majorVersion`, `minorVersion`, `patchVersion`, and `version` Python attributes containing the Cycles version.
 - MultiLineTextWidget, CodeWidget : Added the ability to show line numbers by passing `lineNumbersVisible = True` to the constructor.
 - MultiLineTextWidget : Added `setLineNumbersVisible()` and `getLineNumbersVisible()`
+- PathListingWidget : Added `expandTo()` method.
 
 Breaking Changes
 ----------------
