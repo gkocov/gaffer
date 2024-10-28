@@ -62,10 +62,10 @@ if codecs.lookup( locale.getpreferredencoding() ).name != "utf-8" :
 ###############################################################################################
 
 gafferMilestoneVersion = 1 # for announcing major milestones - may contain all of the below
-gafferMajorVersion = 5 # backwards-incompatible changes
+gafferMajorVersion = 6 # backwards-incompatible changes
 gafferMinorVersion = 0 # new backwards-compatible features
 gafferPatchVersion = 0 # bug fixes
-gafferVersionSuffix = "a3" # used for alpha/beta releases : "a1", "b2", etc.
+gafferVersionSuffix = "" # used for alpha/beta releases : "a1", "b2", etc.
 
 # All of the following must be considered when determining
 # whether or not a change is backwards-compatible
@@ -1381,6 +1381,9 @@ libraries = {
 		],
 
 	},
+
+	# Installs `startup/IECoreScene`.
+	"IECoreScene" : {},
 
 }
 
