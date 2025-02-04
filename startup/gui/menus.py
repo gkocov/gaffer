@@ -545,6 +545,7 @@ for lightType in [
 
 nodeMenu.append( "/USD/Attributes", GafferUSD.USDAttributes, searchText = "USDAttributes" )
 nodeMenu.append( "/USD/Layer Writer", GafferUSD.USDLayerWriter, searchText = "USDLayerWriter" )
+nodeMenu.append( "/USD/Promote Instances", GafferUSD.PromotePointInstances, searchText = "PromotePointInstances" )
 
 # Dispatch nodes
 
